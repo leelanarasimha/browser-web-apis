@@ -10,15 +10,13 @@ async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js');
   }
-
-  const cache = await caches.open('tasks-v1');
   const todoButtonElement = document.querySelector('#todo-button');
   const deleteButtonElement = document.querySelector('#delete-button');
-  todoButtonElement.addEventListener('click', () => getTodoValueEvent(cache));
-  deleteButtonElement.addEventListener('click', () => deleteTodoEvent(cache));
+  todoButtonElement.addEventListener('click', () => getTodoValueEvent());
+  deleteButtonElement.addEventListener('click', () => deleteTodoEvent());
 }
 
-async function deleteTodoEvent(cache) {
+async function deleteTodoEvent() {
   const todoId = getTodoId();
   navigator.serviceWorker.controller.postMessage({
     type: 'DELETE_CACHE',
@@ -26,7 +24,7 @@ async function deleteTodoEvent(cache) {
   });
 }
 
-async function getTodoValueEvent(cache) {
+async function getTodoValueEvent() {
   const todoId = getTodoId();
   const request = generateRequestUrl(todoId);
   const response = await getTodoResponse(request);

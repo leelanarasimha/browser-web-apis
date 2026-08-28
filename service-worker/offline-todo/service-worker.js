@@ -3,9 +3,15 @@ const cache_name = `tasks-${Version}`;
 
 globalThis.addEventListener('install', (event) => {
   console.log('Service Worker is installed', Version);
-  event.waitUntil(caches.open(cache_name));
+  event.waitUntil(preCache());
   globalThis.skipWaiting();
 });
+
+async function preCache() {
+  const cache = await caches.open(cache_name);
+
+  await cache.addAll(['/service-worker/offline-todo/todo.html', '/service-worker/offline-todo/todo.js']);
+}
 
 globalThis.addEventListener('activate', (event) => {
   console.log('service worker activated', Version);
