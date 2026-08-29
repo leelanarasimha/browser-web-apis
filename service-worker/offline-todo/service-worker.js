@@ -40,18 +40,28 @@ async function handleTodoRequest(event) {
   let response = '';
   let message = 'Cache Hit';
 
-  try {
-    cache = await openCache();
-    response = await fetch(event.request);
+  cache = await openCache();
+  const client = await globalThis.clients.get(event.clientId);
+  response = await cache.match(event.request);
+  if (!response) {
     message = 'Network';
+    client.postMessage({
+      type: 'CACHE_MESSAGE',
+      message
+    });
+    response = await fetch(event.request);
     await cache.put(event.request, response.clone());
-  } catch (error) {
-    if (!cache) await openCache();
-    response = await cache.match(event.request);
-    if (!response) throw error;
+    return response;
   }
 
-  const client = await globalThis.clients.get(event.clientId);
+  fetch(event.request)
+    .then((response) => {
+      cache.put(event.request, response.clone());
+    })
+    .catch((error) => {
+      console.log('cannot able to fetch');
+    });
+
   client.postMessage({
     type: 'CACHE_MESSAGE',
     message
