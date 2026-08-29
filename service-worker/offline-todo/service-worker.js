@@ -36,15 +36,19 @@ globalThis.addEventListener('fetch', (event) => {
 });
 
 async function handleTodoRequest(event) {
-  const cache = await openCache();
+  let cache = '';
+  let response = '';
   let message = 'Cache Hit';
 
-  let response = await cache.match(event.request);
-
-  if (!response) {
-    message = 'Network';
+  try {
+    cache = await openCache();
     response = await fetch(event.request);
+    message = 'Network';
     await cache.put(event.request, response.clone());
+  } catch (error) {
+    if (!cache) await openCache();
+    response = await cache.match(event.request);
+    if (!response) throw error;
   }
 
   const client = await globalThis.clients.get(event.clientId);
