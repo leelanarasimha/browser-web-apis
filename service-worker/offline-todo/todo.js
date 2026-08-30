@@ -6,6 +6,18 @@ navigator.serviceWorker.addEventListener('message', (event) => {
   }
 });
 
+const request = indexedDB.open('todo-db', 5);
+
+request.onsuccess = (event) => {
+  console.log('success db');
+  const db = event.target.result;
+};
+
+request.onupgradeneeded = (event) => {
+  console.log('upgrade db event');
+  console.log(event);
+};
+
 async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js');
