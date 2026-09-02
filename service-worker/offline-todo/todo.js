@@ -6,16 +6,85 @@ navigator.serviceWorker.addEventListener('message', (event) => {
   }
 });
 
-const request = indexedDB.open('todo-db', 5);
+const request = indexedDB.open('todo-db', 10);
 
 request.onsuccess = (event) => {
-  console.log('success db');
   const db = event.target.result;
+
+  //createTodos(db);
+  readTodo(db);
 };
 
+function readTodo(db) {
+  const transaction = db.transaction('todos', 'readonly');
+  const store = transaction.objectStore('todos');
+
+  const index = store.index('tagIndex');
+
+  const request = index.getAllKeys('javascript');
+
+  // const request = store.getAllKeys();
+
+  request.onsuccess = (event) => {
+    console.log(event.target.result);
+  };
+}
+
+function createTodos(db) {
+  const transaction = db.transaction('todos', 'readwrite');
+  const store = transaction.objectStore('todos');
+
+  store.add({
+    id: 1,
+    title: 'title 1',
+    status: 'pending',
+    tags: ['javascript', 'web', 'browser']
+  });
+  store.add({
+    id: 2,
+    title: 'title 2',
+    status: 'completed',
+    tags: ['javascript', 'node', 'server']
+  });
+  store.add({
+    id: 3,
+    title: 'title 3',
+    status: 'pending',
+    tags: ['php', 'web', 'server']
+  });
+  store.add({
+    id: 4,
+    title: 'title 4',
+    status: 'completed',
+    tags: ['javascript', 'web', 'server']
+  });
+  store.add({
+    id: 5,
+    title: 'title 5',
+    status: 'pending',
+    tags: ['php', 'web', 'browser']
+  });
+}
+
 request.onupgradeneeded = (event) => {
-  console.log('upgrade db event');
-  console.log(event);
+  const db = event.target.result;
+  const transaction = event.target.transaction;
+
+  if (!db.objectStoreNames.contains('todos')) {
+    db.createObjectStore('todos', {
+      keyPath: 'id'
+    });
+  }
+
+  const store = transaction.objectStore('todos');
+
+  if (!store.indexNames.contains('statusIndex')) {
+    store.createIndex('statusIndex', 'status');
+  }
+
+  if (!store.indexNames.contains('tagIndex')) {
+    store.createIndex('tagIndex', 'tags', { multiEntry: true });
+  }
 };
 
 async function init() {
