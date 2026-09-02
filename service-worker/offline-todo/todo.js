@@ -12,8 +12,29 @@ request.onsuccess = (event) => {
   const db = event.target.result;
 
   //createTodos(db);
-  readTodo(db);
+  // readTodo(db);
+
+  readTodoWithCursor(db);
 };
+
+function readTodoWithCursor(db) {
+  const transaction = db.transaction('todos', 'readwrite');
+  const store = transaction.objectStore('todos');
+  const index = store.index('statusIndex');
+  const range = IDBKeyRange.only('pending');
+  const request = index.openCursor(range, 'nextunique');
+
+  request.onsuccess = (event) => {
+    const cursor = event.target.result;
+    if (cursor) {
+      console.log(cursor.key);
+      console.log(cursor.value);
+      cursor.continue();
+    } else {
+      console.log('done');
+    }
+  };
+}
 
 function readTodo(db) {
   const transaction = db.transaction('todos', 'readonly');
