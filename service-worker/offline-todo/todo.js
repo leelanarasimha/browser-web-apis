@@ -8,14 +8,35 @@ navigator.serviceWorker.addEventListener('message', (event) => {
 
 const request = indexedDB.open('todo-db', 10);
 
+request.error = (event) => {
+  console.log(event);
+};
+
 request.onsuccess = (event) => {
+  console.log('hi leela');
   const db = event.target.result;
 
   //createTodos(db);
   // readTodo(db);
 
-  readTodoWithCursor(db);
+  //readTodoWithCursor(db);
+
+  addTodo(db);
 };
+
+function addTodo(db) {
+  const transaction = db.transaction('todos');
+  const store = db.objectStore('todos');
+  store.add({
+    id: 101,
+    title: `title 101`,
+    status: 'completed'
+  });
+
+  transaction.oncompleted = () => {
+    console.log('transaction completed');
+  };
+}
 
 function readTodoWithCursor(db) {
   const transaction = db.transaction('todos', 'readwrite');
