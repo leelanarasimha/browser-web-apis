@@ -1,19 +1,15 @@
 const worker1 = new Worker('./worker1.js');
-
 const worker2 = new Worker('./worker2.js');
 
-const channel = new MessageChannel();
+const sharedBuffer = new SharedArrayBuffer(4);
 
-worker1.postMessage(
-  {
-    type: 'PORT'
-  },
-  [channel.port1]
-);
+const sharedArray = new Int32Array(sharedBuffer);
 
-worker2.postMessage(
-  {
-    type: 'PORT'
-  },
-  [channel.port2]
-);
+sharedArray[0] = 0;
+
+worker1.postMessage(sharedBuffer);
+worker2.postMessage(sharedBuffer);
+
+setTimeout(() => {
+  console.log('Final value:', sharedArray[0]);
+}, 1000);

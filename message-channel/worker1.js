@@ -1,13 +1,7 @@
 self.onmessage = (event) => {
-  if (event.data.type === 'PORT') {
-    const port = event.ports[0];
+  const sharedArray = new Int32Array(event.data);
 
-    console.log('Worker 1 received its port');
-
-    port.onmessage = (event) => {
-      console.log('Worker 1 received:', event.data);
-    };
-
-    port.postMessage('Hello Worker 2! This is Worker 1.');
+  for (let i = 0; i < 100000; i++) {
+    sharedArray[0]++;
   }
 };

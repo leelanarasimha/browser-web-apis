@@ -2,6 +2,11 @@ const channel = new MessageChannel();
 
 worker.postMessage('Here is your communication port', [channel.port1]);
 
+worker.postMessage({
+  name: 'john',
+  age: 40
+});
+
 channel.port1.onmessage = (event) => {
   console.log('Port 1:', event.data);
 };
