@@ -1,8 +1,23 @@
-const worker = new Worker('./worker.js');
-console.log('hi');
+const channel = new MessageChannel();
 
-worker.onmessage = (event) => {
-  console.log('Main received:', event.data);
+worker.postMessage('Here is your communication port', [channel.port1]);
+
+channel.port1.onmessage = (event) => {
+  console.log('Port 1:', event.data);
 };
 
-worker.postMessage(10);
+channel.port2.onmessage = (event) => {
+  console.log('Port 2:', event.data);
+};
+
+channel.port1.postMessage('Hello from Port 1');
+channel.port2.postMessage('Hello from Port 2');
+
+worker.postMessage(
+  {
+    type: 'PORT'
+  },
+  [channel.port1]
+);
+
+worker.postMessage(buffer, [buffer]);
