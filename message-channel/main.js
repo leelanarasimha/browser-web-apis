@@ -5,15 +5,14 @@ const taskQueue = [];
 const pendingTasks = new Map();
 let nextTaskId = 1;
 
-for (let i = 0; i < WORKER_COUNT; i++) {
+function createWorker(workerId) {
   const worker = new Worker('./worker.js');
   const workerSlot = {
-    id: i + 1,
+    id: workerId,
     worker,
     busy: false,
     taskId: null
   };
-  workers.push(workerSlot);
   worker.onmessage = (event) => {
     const { taskId, result } = event.data;
     console.log(`Worker ${workerSlot.id}: Completed taskId ${taskId} with result ${result}  `);
@@ -26,6 +25,34 @@ for (let i = 0; i < WORKER_COUNT; i++) {
     pendingTasks.delete(taskId);
     schedule();
   };
+
+  worker.onerror = (error) => {
+    console.error(`Worker ${workerSlot.id}: Error occurred -`, error.message);
+    const failedTaskId = workerSlot.taskId;
+    if (failedTaskId !== null) {
+      const task = pendingTasks.get(failedTaskId);
+      if (task) {
+        task.reject(new Error(`Task ${failedTaskId} failed in Worker ${workerSlot.id}: ${error.message}`));
+      }
+      pendingTasks.delete(failedTaskId);
+    }
+    workerSlot.worker.terminate();
+    const index = workers.indexOf(workerSlot);
+    if (index !== -1) {
+      workers.splice(index, 1);
+    }
+    console.log(`Main: Worker ${workerSlot.id} terminated due to error. Creating a new worker.`);
+    const replacementWorkker = createWorker(workerSlot.id);
+    workers.push(replacementWorkker);
+    console.log(`Main: New Worker ${replacementWorkker.id} created to replace Worker ${workerSlot.id}`);
+    schedule();
+  };
+  return workerSlot;
+}
+
+for (let i = 0; i < WORKER_COUNT; i++) {
+  const workerSlot = createWorker(i + 1);
+  workers.push(workerSlot);
 }
 
 function execute(value) {
@@ -57,6 +84,6 @@ function schedule() {
 (async () => {
   const promises = [execute(1), execute(2), execute(3), execute(4), execute(5), execute(6)];
 
-  const results = await Promise.all(promises);
+  const results = await Promise.allSettled(promises);
   console.log('All tasks completed with results:', results);
 })();
